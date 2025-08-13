@@ -1,0 +1,16 @@
+#Inicializar el proyecto 
+npm init -y
+
+#Instalar database local para pruebas
+npm install langchain chromadb
+
+#Ejecutar el script
+node rag.js
+
+#En python
+#Instalo las dependencias
+pip install langchain chromadb ollama
+
+#Ejecutar
+python rag.py
+
