@@ -4,9 +4,12 @@ import { Ollama } from "@langchain/ollama";
 import { Document } from "langchain/document";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { OllamaEmbeddings } from "@langchain/ollama";
+import readline from "readline";
 
-// 0. Debug flag - set DEBUG_MODE=true node rag.js for detailed output
-const DEBUG_MODE = process.env.DEBUG_MODE === "true";
+// 0. Mode configuration
+const DEBUG_MODE = process.env.DEBUG_MODE === "true";   // Show analytics during interaction
+const TEST_MODE = process.env.TEST_MODE === "true";     // Run all 20 test questions
+const INTERACTIVE = !TEST_MODE;                         // Interactive chat by default
 
 // 1. Ollama configuration with timeouts
 const ollamaModel = new Ollama({
@@ -101,7 +104,7 @@ try {
   
   // Read README.md
   if (DEBUG_MODE) console.log("📖 Reading README.md...");
-  const readmeContent = fs.readFileSync("./docs/README.md", "utf8");
+const readmeContent = fs.readFileSync("./docs/README.md", "utf8");
   allDocs.push(new Document({ 
     pageContent: readmeContent,
     metadata: { source: "README.md", type: "documentation" }
@@ -131,7 +134,7 @@ try {
     });
   }
   
-  const splitter = new RecursiveCharacterTextSplitter({
+const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000, // Increased from 500 to better handle source code
     chunkOverlap: 100, // Increased overlap for better context
   });
@@ -181,7 +184,7 @@ try {
   }
 
   // 4. Ask function
-  async function askQuestion(question) {
+async function askQuestion(question) {
     try {
       if (DEBUG_MODE) console.log("\n❓ Question:", question);
       if (DEBUG_MODE) console.log("🔍 Computing query embedding...");
@@ -274,7 +277,7 @@ try {
         console.log("═".repeat(80));
       }
 
-      const prompt = `
+  const prompt = `
 You are an rsk-cli expert. Answer the following question using ONLY the information from the provided context.
 
 IMPORTANT:
@@ -297,7 +300,7 @@ Answer:
 `;
 
       if (DEBUG_MODE) console.log("🤖 Generating answer...");
-      const response = await ollamaModel.call(prompt);
+  const response = await ollamaModel.call(prompt);
       
       if (DEBUG_MODE) {
         console.log("\n" + "═".repeat(80));
@@ -338,7 +341,71 @@ Answer:
     }
   }
 
-  // 5. Example usage - Multiple questions to verify comprehension
+  // 5. Interactive Chat Function
+  async function startInteractiveChat() {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    console.log("\n" + "═".repeat(80));
+    console.log("🤖 RSK-CLI INTERACTIVE CHAT");
+    console.log("═".repeat(80));
+    console.log("💬 Ask me anything about rsk-cli!");
+    console.log("📝 Type 'help' for example questions");
+    console.log("🚪 Type 'exit' or 'quit' to end the session");
+    if (DEBUG_MODE) {
+      console.log("🔍 DEBUG MODE: Full analytics enabled");
+    }
+    console.log("═".repeat(80));
+
+    const askInteractiveQuestion = () => {
+      rl.question("\n❓ Your question: ", async (question) => {
+        const trimmedQuestion = question.trim();
+        
+        if (trimmedQuestion.toLowerCase() === 'exit' || trimmedQuestion.toLowerCase() === 'quit') {
+          console.log("\n👋 Thanks for using rsk-cli chat! Goodbye!");
+          rl.close();
+          return;
+        }
+        
+        if (trimmedQuestion.toLowerCase() === 'help') {
+          console.log("\n💡 Example questions you can ask:");
+          console.log("  • What is rsk-cli?");
+          console.log("  • How do I check my wallet balance?");
+          console.log("  • How can I transfer RBTC?");
+          console.log("  • What commands are available for smart contracts?");
+          console.log("  • How do I create a new wallet?");
+          console.log("  • What's the difference between mainnet and testnet?");
+          console.log("  • Show me the exact command structure for wallet management");
+          console.log("  • What are the available options for the transfer command?");
+          askInteractiveQuestion();
+          return;
+        }
+        
+        if (trimmedQuestion === '') {
+          console.log("⚠️  Please enter a question or type 'help' for examples.");
+          askInteractiveQuestion();
+          return;
+        }
+
+        try {
+          if (!DEBUG_MODE) {
+            console.log("\n🔄 Processing your question...");
+          }
+          await askQuestion(trimmedQuestion);
+        } catch (error) {
+          console.error("❌ Error processing your question:", error.message);
+        }
+        
+        askInteractiveQuestion();
+      });
+    };
+
+    askInteractiveQuestion();
+  }
+
+  // 6. Example usage - Multiple questions to verify comprehension
   if (DEBUG_MODE) {
     console.log("\n" + "=".repeat(60));
     console.log("🧪 TESTING: Verifying model comprehension");
@@ -377,12 +444,21 @@ Answer:
     "Show me the exact error messages defined in the source code"
   ];
   
-  if (DEBUG_MODE) {
-    // Run all test questions in debug mode
+  // Choose execution mode based on environment variables
+  if (INTERACTIVE) {
+    // Interactive chat mode (default)
+    await startInteractiveChat();
+  } else if (TEST_MODE) {
+    // Run all test questions mode
+    const modeTitle = DEBUG_MODE ? "🧪 COMPREHENSIVE TESTING SUITE (WITH DEBUG)" : "🧪 COMPREHENSIVE TESTING SUITE";
+    
     console.log("\n" + "═".repeat(80));
-    console.log("🧪 COMPREHENSIVE TESTING SUITE");
+    console.log(modeTitle);
     console.log("═".repeat(80));
     console.log(`📋 Running ${testQuestions.length} test questions to verify model comprehension`);
+    if (DEBUG_MODE) {
+      console.log("🔍 Full analytics and diagnostics enabled");
+    }
     console.log("═".repeat(80));
     
     for (let i = 0; i < testQuestions.length; i++) {
@@ -408,16 +484,6 @@ Answer:
     console.log(`│ ✅ TESTING COMPLETE - All ${testQuestions.length} questions processed ${"".padEnd(28)} │`);
     console.log(`│ 🎯 Model comprehension verification finished ${"".padEnd(32)} │`);
     console.log(`└${"─".repeat(78)}┘`);
-  } else {
-    // In normal mode, just run the first two questions as examples
-    console.log("\n" + "═".repeat(60));
-    console.log("📝 SAMPLE QUESTIONS");
-    console.log("═".repeat(60));
-    await askQuestion("What is rsk-cli and what is it used for?");
-    await askQuestion("What is the command to check my wallet balance using rsk-cli?");
-    console.log("\n" + "═".repeat(60));
-    console.log("✅ Sample complete. Use DEBUG_MODE=true for full testing.");
-    console.log("═".repeat(60));
   }
   
 } catch (error) {

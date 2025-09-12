@@ -44,22 +44,46 @@ If localhost fails on Windows, try:
 - Check firewall/antivirus for port 11434
 
 ## Run
+
+### 🎯 **Three Modes Available:**
+
+#### 1. **Interactive Chat Mode** 🤖 (Default)
 ```bash
 node rag.js
 ```
+- **Real-time Q&A**: Ask your own questions and get instant answers
+- **Chat interface**: Type questions naturally and press Enter
+- **Help system**: Type 'help' for example questions
+- **Easy exit**: Type 'exit' or 'quit' to end session
+- **Clean output**: Perfect for end users
 
-### Debug Mode
-For detailed debugging information, you can enable debug mode:
+#### 2. **Interactive Debug Mode** 🔍
 ```bash
 DEBUG_MODE=true node rag.js
 ```
+- **Interactive chat** with full visual analytics
+- **Real-time debugging**: See how the system processes your questions
+- **Visual progress bars** and diagnostic information
+- **Perfect for testing and development**
 
-**Normal mode** shows:
-- Clean, minimal output
-- Final answers only
-- 2 sample questions
+#### 3. **Comprehensive Testing Mode** 🧪
+```bash
+TEST_MODE=true node rag.js
+```
+- **Automated testing**: Runs all 20 comprehensive test questions
+- **Clean output**: Just the questions and answers
+- **Batch processing**: Perfect for validation
 
-**Debug mode** shows:
+#### 4. **Debug Testing Mode** 🔬
+```bash
+DEBUG_MODE=true TEST_MODE=true node rag.js
+```
+- **Full diagnostic testing**: All 20 questions with complete analytics
+- **Visual analysis**: Every aspect of the RAG pipeline
+- **Comprehensive evaluation**: Perfect for deep system analysis
+
+### **Interactive Mode Features:**
+**Interactive modes** include:
 - 📊 **Visual Progress Bars**: Similarity scores, context length, response length
 - 📁 **File Loading Analytics**: Character counts, file statistics, samples
 - 📚 **Document Processing Pipeline**: Type breakdown, chunk statistics
@@ -72,34 +96,41 @@ DEBUG_MODE=true node rag.js
 - 💡 **Special Debugging**: Enhanced analysis for specific question types
 - ✅ **Visual Status Indicators**: Color-coded success/warning messages
 
-### Example Debug Output
-When running with `DEBUG_MODE=true`, you'll see detailed visualizations like:
+### Example Interactive Session
+When running interactive mode, you'll see:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-📊 TOP SIMILARITY MATCHES
+🤖 RSK-CLI INTERACTIVE CHAT
+═══════════════════════════════════════════════════════════════════════════════
+💬 Ask me anything about rsk-cli!
+📝 Type 'help' for example questions
+🚪 Type 'exit' or 'quit' to end the session
 ═══════════════════════════════════════════════════════════════════════════════
 
-🔍 MATCH #1
-   📈 Score: 0.7845 [████████████████░░░░]
-   📁 Source: README.md
-   📝 Type: documentation
-   💬 Preview: "rsk-cli is a command-line tool for interacting with Rootstock blockchain..."
-   ────────────────────────────────────────────────────────────────
+❓ Your question: How do I check my wallet balance?
 
-🎯 KEYWORD ANALYSIS:
-   🔎 Searching for: [wallet, balance, command]
-   ✅ Found: [wallet, balance, command]
-   📊 Match rate: 3/3 (100%)
+🔄 Processing your question...
 
-🤖 MODEL RESPONSE ANALYSIS
-═══════════════════════════════════════════════════════════════════════════════
-To check your wallet balance using rsk-cli, use the command: `rsk-cli balance`
-═══════════════════════════════════════════════════════════════════════════════
-📏 Response length: 87 chars [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]
-✅ 🟢 Model successfully used the provided context
-📚 Source attribution: ✅
+💡 Answer: To check your wallet balance using rsk-cli, use the command: `rsk-cli balance`
+
+❓ Your question: help
+
+💡 Example questions you can ask:
+  • What is rsk-cli?
+  • How do I check my wallet balance?
+  • How can I transfer RBTC?
+  • What commands are available for smart contracts?
+  • How do I create a new wallet?
+  • What's the difference between mainnet and testnet?
+
+❓ Your question: exit
+
+👋 Thanks for using rsk-cli chat! Goodbye!
 ```
+
+### Debug Mode Analytics
+When running with `DEBUG_MODE=true`, you get all the visual analytics in real-time during your chat session.
 
 ## Troubleshooting
 - If embeddings call times out: ensure `nomic-embed-text` is pulled and Ollama is running.
