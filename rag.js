@@ -5,17 +5,61 @@ import { Document } from "langchain/document";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { OllamaEmbeddings } from "@langchain/ollama";
 import readline from "readline";
+import crypto from "crypto";
 
 // 0. Mode configuration
 const DEBUG_MODE = process.env.DEBUG_MODE === "true";   // Show analytics during interaction
 const TEST_MODE = process.env.TEST_MODE === "true";     // Run all 20 test questions
 const INTERACTIVE = !TEST_MODE;                         // Interactive chat by default
 
+// Performance optimizations
+const CACHE_EMBEDDINGS = true;                          // Cache embeddings to avoid re-computation
+const FAST_MODE = process.env.FAST_MODE === "true";     // Use optimizations for speed
+const ULTRA_FAST = process.env.ULTRA_FAST === "true";   // Maximum speed optimizations
+const CACHE_FILE = "./embeddings-cache.json";           // Persistent cache file
+const embeddingCache = new Map();                       // In-memory cache for embeddings
+
+// Load persistent cache on startup
+function loadPersistentCache() {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const cacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+      Object.entries(cacheData).forEach(([key, value]) => {
+        embeddingCache.set(key, value);
+      });
+      if (DEBUG_MODE) {
+        console.log(`🚀 Loaded ${Object.keys(cacheData).length} cached embeddings from disk`);
+      }
+      return Object.keys(cacheData).length;
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.log(`⚠️ Could not load cache file: ${error.message}`);
+    }
+  }
+  return 0;
+}
+
+// Save cache to disk
+function savePersistentCache() {
+  try {
+    const cacheData = Object.fromEntries(embeddingCache.entries());
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    if (DEBUG_MODE) {
+      console.log(`💾 Saved ${Object.keys(cacheData).length} embeddings to persistent cache`);
+    }
+  } catch (error) {
+    if (DEBUG_MODE) {
+      console.log(`⚠️ Could not save cache file: ${error.message}`);
+    }
+  }
+}
+
 // 1. Ollama configuration with timeouts
 const ollamaModel = new Ollama({
   baseUrl: "http://localhost:11434",
   model: "llama3.2",
-  timeout: 60000, // 60 segundos timeout
+  timeout: ULTRA_FAST ? 10000 : (FAST_MODE ? 20000 : 60000), // Ultra fast: 10s, Fast: 20s, Normal: 60s
 });
 
 // Utility: cosine similarity
@@ -100,6 +144,10 @@ function readCommandsFolder() {
 
 // 2. Load multiple information sources
 try {
+  // Load persistent cache first
+  const startupTime = Date.now();
+  const cachedCount = loadPersistentCache();
+  
   const allDocs = [];
   
   // Read README.md
@@ -135,8 +183,8 @@ const readmeContent = fs.readFileSync("./docs/README.md", "utf8");
   }
   
 const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 1000, // Increased from 500 to better handle source code
-    chunkOverlap: 100, // Increased overlap for better context
+    chunkSize: ULTRA_FAST ? 500 : (FAST_MODE ? 800 : 1000), // Ultra fast: 500, Fast: 800, Normal: 1000
+    chunkOverlap: ULTRA_FAST ? 50 : (FAST_MODE ? 80 : 100), // Ultra fast: 50, Fast: 80, Normal: 100
   });
 
   const docs = await splitter.splitDocuments(allDocs);
@@ -153,25 +201,52 @@ const splitter = new RecursiveCharacterTextSplitter({
     console.log(`   📏 Size range: ${Math.min(...chunkSizes)} - ${Math.max(...chunkSizes)} chars`);
   }
 
-  // 3. Create embeddings (in-memory, no external server)
+  // 3. Create embeddings (with caching for performance)
+  const startTime = Date.now();
   if (DEBUG_MODE) {
     console.log("\n🔄 Creating embeddings with 'nomic-embed-text'...");
     console.log("   ⏳ This may take a moment depending on document count...");
+    if (CACHE_EMBEDDINGS) {
+      console.log("   🚀 Embedding caching enabled for better performance");
+    }
   }
   
   const embeddings = new OllamaEmbeddings({
     model: "nomic-embed-text",
     baseUrl: "http://localhost:11434",
-    timeout: 30000, // 30 seconds timeout
+    timeout: ULTRA_FAST ? 8000 : (FAST_MODE ? 15000 : 30000), // Ultra fast: 8s, Fast: 15s, Normal: 30s
   });
 
   const docTexts = docs.map(d => d.pageContent);
-  const docVectors = await embeddings.embedDocuments(docTexts);
+  let docVectors;
+  
+  if (CACHE_EMBEDDINGS) {
+    // Generate cache key based on document content
+    const contentHash = crypto.createHash('md5').update(JSON.stringify(docTexts)).digest('hex');
+    const cacheKey = `embeddings_${contentHash}`;
+    
+    if (embeddingCache.has(cacheKey)) {
+      if (DEBUG_MODE) console.log("   ⚡ Using cached embeddings!");
+      docVectors = embeddingCache.get(cacheKey);
+    } else {
+      if (DEBUG_MODE) console.log("   🔄 Computing new embeddings...");
+      docVectors = await embeddings.embedDocuments(docTexts);
+      embeddingCache.set(cacheKey, docVectors);
+      // Save to persistent cache immediately
+      savePersistentCache();
+      if (DEBUG_MODE) console.log("   💾 Embeddings cached for future use");
+    }
+  } else {
+    docVectors = await embeddings.embedDocuments(docTexts);
+  }
+  
   const index = docVectors.map((vec, i) => ({ 
     vector: vec, 
     text: docTexts[i],
     metadata: docs[i].metadata 
   }));
+  
+  const embeddingTime = Date.now() - startTime;
   
   if (DEBUG_MODE) {
     console.log("✅ Embeddings created successfully!");
@@ -181,23 +256,76 @@ const splitter = new RecursiveCharacterTextSplitter({
     console.log(`   📊 Total vectors: ${index.length}`);
     console.log(`   🔢 Vector dimensions: ${docVectors[0]?.length || 0}`);
     console.log(`   💾 Memory usage: ~${Math.round(index.length * (docVectors[0]?.length || 0) * 4 / 1024 / 1024)} MB`);
+    console.log(`   ⚡ Processing time: ${(embeddingTime / 1000).toFixed(2)}s`);
+    console.log(`   📁 Cached embeddings loaded: ${cachedCount}`);
+    console.log(`   🚀 Total startup time: ${((Date.now() - startupTime) / 1000).toFixed(2)}s`);
+    if (FAST_MODE || ULTRA_FAST) {
+      const mode = ULTRA_FAST ? "ULTRA_FAST" : "FAST";
+      console.log(`   🚀 ${mode} mode optimizations: ENABLED`);
+    }
   }
 
   // 4. Ask function
 async function askQuestion(question) {
     try {
+      const questionStartTime = Date.now();
       if (DEBUG_MODE) console.log("\n❓ Question:", question);
       if (DEBUG_MODE) console.log("🔍 Computing query embedding...");
-      const queryVec = await embeddings.embedQuery(question);
+      
+      // Cache query embeddings too
+      let queryVec;
+      if (CACHE_EMBEDDINGS) {
+        const queryHash = crypto.createHash('md5').update(question).digest('hex');
+        const queryCacheKey = `query_${queryHash}`;
+        
+        if (embeddingCache.has(queryCacheKey)) {
+          if (DEBUG_MODE) console.log("   ⚡ Using cached query embedding!");
+          queryVec = embeddingCache.get(queryCacheKey);
+        } else {
+          queryVec = await embeddings.embedQuery(question);
+          embeddingCache.set(queryCacheKey, queryVec);
+          // Save query cache to persistent storage
+          savePersistentCache();
+        }
+      } else {
+        queryVec = await embeddings.embedQuery(question);
+      }
 
       if (DEBUG_MODE) console.log("🔎 Searching similar documents...");
-      const scored = index.map(({ vector, text, metadata }) => ({
-        score: cosineSimilarity(queryVec, vector),
-        text,
-        metadata
-      }));
-      scored.sort((a, b) => b.score - a.score);
-      const topK = scored.slice(0, 5); // Increased from 3 to 5 for better context
+      
+      // Optimized similarity search with early termination for fast mode
+      let scored;
+      if (FAST_MODE || ULTRA_FAST) {
+        // Use a more efficient search for speed
+        scored = [];
+        const targetCount = ULTRA_FAST ? 2 : 3;
+        let minScore = 0;
+        
+        for (const { vector, text, metadata } of index) {
+          const score = cosineSimilarity(queryVec, vector);
+          
+          if (scored.length < targetCount) {
+            scored.push({ score, text, metadata });
+            if (scored.length === targetCount) {
+              scored.sort((a, b) => b.score - a.score);
+              minScore = scored[scored.length - 1].score;
+            }
+          } else if (score > minScore) {
+            scored[scored.length - 1] = { score, text, metadata };
+            scored.sort((a, b) => b.score - a.score);
+            minScore = scored[scored.length - 1].score;
+          }
+        }
+      } else {
+        // Full search for accuracy
+        scored = index.map(({ vector, text, metadata }) => ({
+          score: cosineSimilarity(queryVec, vector),
+          text,
+          metadata
+        }));
+        scored.sort((a, b) => b.score - a.score);
+      }
+      const topK = scored.slice(0, ULTRA_FAST ? 2 : (FAST_MODE ? 3 : 5)); // Ultra fast: 2, Fast: 3, Normal: 5
 
       if (DEBUG_MODE) {
         console.log("\n" + "═".repeat(80));
@@ -277,7 +405,26 @@ async function askQuestion(question) {
         console.log("═".repeat(80));
       }
 
-  const prompt = `
+  let prompt;
+  if (ULTRA_FAST) {
+    // Ultra-short prompt for maximum speed
+    prompt = `Context: ${context}
+
+Question: ${question}
+
+Answer briefly using only the context above:`;
+  } else if (FAST_MODE) {
+    // Medium prompt for balance of speed and quality
+    prompt = `You are an rsk-cli expert. Answer using ONLY the provided context.
+
+Context: ${context}
+
+Question: ${question}
+
+Answer:`;
+  } else {
+    // Full detailed prompt for accuracy
+    prompt = `
 You are an rsk-cli expert. Answer the following question using ONLY the information from the provided context.
 
 IMPORTANT:
@@ -298,9 +445,26 @@ Instructions:
 
 Answer:
 `;
+  }
 
       if (DEBUG_MODE) console.log("🤖 Generating answer...");
+      
+      // Show processing time in debug mode
+      const processingTime = Date.now() - questionStartTime;
+      if (DEBUG_MODE) {
+        console.log(`⚡ Query processing time: ${(processingTime / 1000).toFixed(2)}s`);
+      }
+
   const response = await ollamaModel.call(prompt);
+      
+      const totalTime = Date.now() - questionStartTime;
+      if (DEBUG_MODE) {
+        console.log(`🏁 Total response time: ${(totalTime / 1000).toFixed(2)}s`);
+      } else {
+        // Always show response time in non-debug mode for performance comparison
+        const timeIcon = ULTRA_FAST ? "🚀" : (FAST_MODE ? "⚡" : "⏱️");
+        console.log(`${timeIcon} Response time: ${(totalTime / 1000).toFixed(2)}s`);
+      }
       
       if (DEBUG_MODE) {
         console.log("\n" + "═".repeat(80));
@@ -357,6 +521,15 @@ Answer:
     if (DEBUG_MODE) {
       console.log("🔍 DEBUG MODE: Full analytics enabled");
     }
+    if (ULTRA_FAST) {
+      console.log("🚀 ULTRA FAST MODE: Maximum speed optimizations (minimal context, ultra-short prompts)");
+    } else if (FAST_MODE) {
+      console.log("⚡ FAST MODE: Optimized for speed (smaller context, caching enabled)");
+    }
+    if (CACHE_EMBEDDINGS) {
+      const modeText = ULTRA_FAST ? "Ultra Fast Mode" : (FAST_MODE ? "Fast Mode" : "Normal Mode");
+      console.log(`🚀 PERFORMANCE: Embedding caching enabled (${modeText})`);
+    }
     console.log("═".repeat(80));
 
     const askInteractiveQuestion = () => {
@@ -391,7 +564,13 @@ Answer:
 
         try {
           if (!DEBUG_MODE) {
-            console.log("\n🔄 Processing your question...");
+            if (ULTRA_FAST) {
+              console.log("\n🚀 Ultra fast processing mode...");
+            } else if (FAST_MODE) {
+              console.log("\n⚡ Fast processing mode...");
+            } else {
+              console.log("\n🔄 Processing your question...");
+            }
           }
           await askQuestion(trimmedQuestion);
         } catch (error) {

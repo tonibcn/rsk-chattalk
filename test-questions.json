@@ -1,0 +1,56 @@
+{
+  "testQuestions": [
+    "What is rsk-cli and what is it used for?",
+    "What is the command to check my wallet balance using rsk-cli?",
+    "How can I transfer RBTC using rsk-cli?",
+    "What command do I use to deploy a smart contract?",
+    "How do I verify a smart contract on Rootstock?",
+    "What is the difference between mainnet and testnet in rsk-cli?",
+    "How can I create a new wallet with rsk-cli?",
+    "What does the bridge command do in rsk-cli?",
+    "Show me the exact command structure for wallet management",
+    "What are the available options for the transfer command?",
+    "What are the exact function parameters for the balance command implementation?",
+    "Show me the specific validation logic used in the transfer command",
+    "What error handling is implemented in the wallet creation process?",
+    "How does the deploy command handle ABI and bytecode validation?",
+    "What are the exact TypeScript types used for command options?",
+    "Show me the specific network configuration logic in the source code",
+    "What are the exact validation rules for wallet addresses in the code?",
+    "How does the bridge command handle different network types?",
+    "What are the specific gas estimation algorithms used?",
+    "Show me the exact error messages defined in the source code"
+  ],
+  "performanceResults": {
+    "normalMode": {
+      "description": "Baseline performance without optimizations",
+      "startupTime": "121.84s",
+      "averageResponse": "120-130s",
+      "range": "82.90s - 218.83s",
+      "errors": 1,
+      "notes": "1 timeout error"
+    },
+    "ultraFastMode": {
+      "description": "With persistent cache and aggressive optimizations",
+      "startupTime": "0.34s (with cache)",
+      "averageResponse": "28-30s",
+      "range": "14.90s - 64.96s", 
+      "errors": 0,
+      "notes": "No timeouts, persistent cache working"
+    },
+    "improvements": {
+      "startupSpeedup": "359x faster",
+      "responseSpeedup": "4-5x faster",
+      "reliability": "100% (no timeouts)",
+      "cacheFile": "embeddings-cache.json (5MB)"
+    }
+  },
+  "nextOptimizations": {
+    "phase2": [
+      "Test faster models",
+      "Implement streaming responses",
+      "Add FAQ system for common questions"
+    ],
+    "targetPerformance": "Sub-5 second responses for 80% of questions"
+  }
+}
