@@ -108,6 +108,27 @@ DEBUG_MODE=true TEST_MODE=true node rag.js
 - **Visual analysis**: Every aspect of the RAG pipeline
 - **Comprehensive evaluation**: Perfect for deep system analysis
 
+### **FAQ System** 📚
+
+The system includes an intelligent FAQ component that provides instant responses for common questions:
+
+#### Features
+- **⚡ Instant Responses**: 0.01s response time for FAQ matches
+- **📋 92 Pre-defined Questions**: Covers all major rsk-cli commands and operations
+- **🎯 Smart Matching**: Uses similarity scoring to find the best FAQ match
+- **⚙️ Executable Commands**: Many FAQ responses include ready-to-use command examples
+- **🔄 Graceful Fallback**: Automatically falls back to RAG system for complex or unique questions
+
+#### FAQ Categories
+- **👛 Wallet Management**: Create, import, list, switch, backup wallets
+- **💰 Balance Checking**: Check RBTC and token balances on mainnet/testnet
+- **💸 Token Transfers**: Send RBTC and ERC20 tokens with various options
+- **📄 Smart Contracts**: Deploy, verify, and interact with contracts
+- **📊 Transaction Monitoring**: Check transaction status and history
+- **🌉 Bridge Operations**: Interact with RSK bridge contract
+- **📦 Batch Operations**: Multi-address transfers
+- **ℹ️ General Information**: What is rsk-cli, network differences
+
 ### **Performance Features:** ⚡
 The system includes massive performance optimizations achieving **359x faster startup** and **4-5x faster responses**:
 

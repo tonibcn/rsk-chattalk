@@ -6,6 +6,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { OllamaEmbeddings } from "@langchain/ollama";
 import readline from "readline";
 import crypto from "crypto";
+import FAQSystem from "./faq-system.js";
 
 // 0. Mode configuration
 const DEBUG_MODE = process.env.DEBUG_MODE === "true";   // Show analytics during interaction
@@ -18,6 +19,9 @@ const FAST_MODE = process.env.FAST_MODE === "true";     // Use optimizations for
 const ULTRA_FAST = process.env.ULTRA_FAST === "true";   // Maximum speed optimizations
 const CACHE_FILE = "./embeddings-cache.json";           // Persistent cache file
 const embeddingCache = new Map();                       // In-memory cache for embeddings
+
+// FAQ System for instant responses
+const faqSystem = new FAQSystem();
 
 // Load persistent cache on startup
 function loadPersistentCache() {
@@ -148,6 +152,13 @@ try {
   const startupTime = Date.now();
   const cachedCount = loadPersistentCache();
   
+  // Initialize FAQ system
+  const faqStats = faqSystem.getStats();
+  if (DEBUG_MODE) {
+    console.log(`📚 FAQ System loaded: ${faqStats.questions} questions across ${faqStats.categories} categories`);
+    console.log(`⚙️ Executable commands: ${faqStats.commands}`);
+  }
+  
   const allDocs = [];
   
   // Read README.md
@@ -270,7 +281,44 @@ async function askQuestion(question) {
     try {
       const questionStartTime = Date.now();
       if (DEBUG_MODE) console.log("\n❓ Question:", question);
-      if (DEBUG_MODE) console.log("🔍 Computing query embedding...");
+      
+      // 🚀 STEP 1: Check FAQ first for instant responses
+      if (DEBUG_MODE) console.log("📚 Checking FAQ system...");
+      const faqResponse = await faqSystem.getInstantAnswer(question);
+      
+      if (faqResponse && faqResponse.confidence > 0.6) {
+        const faqTime = Date.now() - questionStartTime;
+        
+        if (DEBUG_MODE) {
+          console.log("✅ FAQ Match Found!");
+          console.log(`   📊 Confidence: ${(faqResponse.confidence * 100).toFixed(1)}%`);
+          console.log(`   📁 Category: ${faqResponse.category}`);
+          console.log(`   🎯 Matched: "${faqResponse.matchedQuestion}"`);
+          if (faqResponse.command) {
+            console.log(`   ⚙️ Command: ${faqResponse.command}`);
+          }
+        }
+        
+        const timeIcon = ULTRA_FAST ? "🚀" : (FAST_MODE ? "⚡" : "⏱️");
+        console.log(`${timeIcon} Response time: ${(faqTime / 1000).toFixed(2)}s (FAQ)`);
+        console.log("\n💡 Answer:", faqResponse.answer);
+        
+        if (faqResponse.command && faqResponse.executable) {
+          console.log(`\n🔧 **Command**: \`${faqResponse.command}\``);
+        }
+        
+        return;
+      }
+      
+      // 🔄 STEP 2: Fallback to RAG if no FAQ match
+      if (DEBUG_MODE) {
+        if (faqResponse) {
+          console.log(`⚠️ FAQ confidence too low (${(faqResponse.confidence * 100).toFixed(1)}%), using RAG`);
+        } else {
+          console.log("❌ No FAQ match found, using RAG");
+        }
+        console.log("🔍 Computing query embedding...");
+      }
       
       // Cache query embeddings too
       let queryVec;
@@ -518,6 +566,7 @@ Answer:
     console.log("💬 Ask me anything about rsk-cli!");
     console.log("📝 Type 'help' for example questions");
     console.log("🚪 Type 'exit' or 'quit' to end the session");
+    console.log(`📚 FAQ System: ${faqStats.questions} instant answers available`);
     if (DEBUG_MODE) {
       console.log("🔍 DEBUG MODE: Full analytics enabled");
     }

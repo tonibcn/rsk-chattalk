@@ -5,5 +5,8 @@ temp-rsk-cli/
 guide.txt
 embeddings-cache.json
 " --all ´ü╝ cat"
-"how --stat ce9c034"    
+"how --stat ce9c034"
+# Keep FAQ files in version control - they should be tracked
+# docs/faq-commands.json - now in docs folder
+# faq-system.js - separate module for maintainability    
 

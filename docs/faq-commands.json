@@ -1,0 +1,190 @@
+{
+  "faq": {
+    "wallet": {
+      "category": "Wallet Management",
+      "command": "rsk-cli wallet",
+      "questions": [
+        "How do I create a new wallet?",
+        "How can I create a new wallet with rsk-cli?",
+        "What is the command to create a wallet?",
+        "How do I make a new Ethereum-compatible wallet?",
+        "How to generate a new wallet?",
+        "Can I create a wallet with rsk-cli?",
+        "What's the wallet creation command?",
+        "How do I import an existing wallet?",
+        "How can I import my private key?",
+        "How do I list all my saved wallets?",
+        "How to switch between wallets?",
+        "How can I change the current wallet?",
+        "How do I update a wallet's name?",
+        "How to rename a wallet?",
+        "How can I backup my wallet?",
+        "How do I delete a wallet?",
+        "How to remove a saved wallet?"
+      ],
+      "answer": "Use `rsk-cli wallet` to manage wallets. This command allows you to:\n- Create new Ethereum-compatible wallets\n- Import existing wallets using private keys\n- List all saved wallets\n- Switch between saved wallets\n- Update wallet names\n- Backup wallet files\n- Delete saved wallets\n\nThe tool uses AES-256-CBC encryption to securely store your private keys.",
+      "executable": true
+    },
+    "balance": {
+      "category": "Balance Check",
+      "command": "rsk-cli balance",
+      "questions": [
+        "How do I check my wallet balance?",
+        "What is the command to check my wallet balance using rsk-cli?",
+        "How can I see my token balance?",
+        "How to check balance on mainnet?",
+        "How to check balance on testnet?",
+        "What's my RBTC balance?",
+        "How do I check RIF token balance?",
+        "Can I check balance for specific tokens?",
+        "How to view my current balance?",
+        "What command shows wallet balance?"
+      ],
+      "answer": "Use `rsk-cli balance` to check your wallet balance.\n\n**Mainnet**: `rsk-cli balance`\n**Testnet**: `rsk-cli balance -t` or `rsk-cli balance --testnet`\n**Specific wallet**: `rsk-cli balance --wallet <name>`\n\nThe command shows token information, contract address, holder address, and current balance.",
+      "executable": true
+    },
+    "transfer": {
+      "category": "Transfer Tokens",
+      "command": "rsk-cli transfer",
+      "questions": [
+        "How can I transfer RBTC using rsk-cli?",
+        "Can I send RBTC to another address?",
+        "How do I transfer tokens?",
+        "What's the command to send RBTC?",
+        "How to transfer ERC20 tokens?",
+        "Can I send tokens on testnet?",
+        "How do I transfer with custom gas?",
+        "What's the transfer command syntax?",
+        "How to send money using rsk-cli?",
+        "Can I transfer to multiple addresses?",
+        "How do I use interactive transfer mode?"
+      ],
+      "answer": "Use `rsk-cli transfer` to send RBTC or ERC20 tokens.\n\n**RBTC Transfer**:\n- Basic: `rsk-cli transfer --address 0xRecipientAddress --value 0.001`\n- Testnet: `rsk-cli transfer --testnet --address 0xRecipientAddress --value 0.001`\n\n**ERC20 Transfer**:\n- `rsk-cli transfer --token 0xTokenAddress --address 0xRecipientAddress --value 0.1`\n\n**Interactive Mode**: `rsk-cli transfer -i` or `rsk-cli transfer --interactive`\n\n**Options**: --wallet, --gas-limit, --priority-fee, --data",
+      "executable": true
+    },
+    "tx": {
+      "category": "Transaction Status",
+      "command": "rsk-cli tx",
+      "questions": [
+        "How do I check transaction status?",
+        "Can I view transaction details?",
+        "How to check if my transaction was confirmed?",
+        "What's the command to check transaction by ID?",
+        "How do I verify a transaction hash?",
+        "Can I see transaction information?",
+        "How to check tx status on testnet?",
+        "What command shows transaction details?"
+      ],
+      "answer": "Use `rsk-cli tx --txid <transaction_hash>` to check transaction status.\n\n**Mainnet**: `rsk-cli tx --txid 0x86deb77e1d666ae6848630496d672da8b5f48292681bda33f8f04245c55dde26`\n**Testnet**: `rsk-cli tx --testnet --txid 0x86deb77e1d666ae6848630496d672da8b5f48292681bda33f8f04245c55dde26`\n\nShows wallet address, network, current balance, and transaction confirmation status.",
+      "executable": true
+    },
+    "deploy": {
+      "category": "Smart Contract Deployment",
+      "command": "rsk-cli deploy",
+      "questions": [
+        "What command do I use to deploy a smart contract?",
+        "How do I deploy a contract on Rootstock?",
+        "How to deploy smart contract on testnet?",
+        "What's the deploy command syntax?",
+        "How do I deploy with constructor arguments?",
+        "Can I deploy contracts with specific wallet?",
+        "How to deploy on mainnet vs testnet?"
+      ],
+      "answer": "Use `rsk-cli deploy` to deploy smart contracts.\n\n**Basic Deploy**:\n- `rsk-cli deploy --abi <path_to_abi> --bytecode <path_to_bytecode>`\n- **With args**: `rsk-cli deploy --abi <abi_path> --bytecode <bytecode_path> --args <arg1> <arg2>`\n\n**Testnet**: `rsk-cli deploy --testnet --abi <abi_path> --bytecode <bytecode_path>`\n**Specific wallet**: `rsk-cli deploy --wallet <name> --abi <abi_path> --bytecode <bytecode_path>`\n\nReturns contract address and transaction hash upon successful deployment.",
+      "executable": true
+    },
+    "verify": {
+      "category": "Contract Verification",
+      "command": "rsk-cli verify",
+      "questions": [
+        "How do I verify a smart contract on Rootstock?",
+        "What's the command to verify contracts?",
+        "How to verify contract on testnet?",
+        "Can I verify contracts with constructor arguments?",
+        "How do I verify using JSON input?",
+        "What's the verify command syntax?"
+      ],
+      "answer": "Use `rsk-cli verify` to verify smart contracts on Rootstock Explorer.\n\n**Basic Verification**:\n- `rsk-cli verify --json <path_to_json> --address <contract_address> --name <contract_name>`\n\n**With constructor args**:\n- `rsk-cli verify --json <json_path> --address <address> --name <name> --decodedArgs <arg1> <arg2>`\n\n**Testnet**: `rsk-cli verify --testnet --json <json_path> --address <address> --name <name>`\n\nUses JSON Standard Input via Rootstock Explorer API for verification.",
+      "executable": true
+    },
+    "contract": {
+      "category": "Contract Interaction",
+      "command": "rsk-cli contract",
+      "questions": [
+        "How do I interact with smart contracts?",
+        "Can I call contract functions?",
+        "How to interact with verified contracts?",
+        "Can I interact with non-verified smart contracts?",
+        "What's the contract interaction command?",
+        "How to call read functions?",
+        "Can I execute contract methods?"
+      ],
+      "answer": "Use `rsk-cli contract --address <contract_address>` to interact with verified smart contracts.\n\n**Mainnet**: `rsk-cli contract --address <contract_address>`\n**Testnet**: `rsk-cli contract --address <contract_address> --testnet`\n\n**Note**: Only **read functions** are available for verified contracts. Write functions are excluded to prevent accidental state changes. For non-verified contracts, you cannot directly call functions.",
+      "executable": true
+    },
+    "bridge": {
+      "category": "Bridge Operations",
+      "command": "rsk-cli bridge",
+      "questions": [
+        "What does the bridge command do in rsk-cli?",
+        "How do I interact with RSK bridge?",
+        "How does the bridge command handle different network types?",
+        "Can I use bridge on testnet?",
+        "What are bridge read functions?",
+        "How to call bridge contract functions?"
+      ],
+      "answer": "Use `rsk-cli bridge` to interact with the RSK bridge contract.\n\n**Mainnet**: `rsk-cli bridge`\n**Testnet**: `rsk-cli bridge --testnet`\n**Specific wallet**: `rsk-cli bridge --wallet <name>`\n\nLists all allowed read and write functions of the RSK bridge contract and allows you to call them. You can select function type (read/write) and specific functions interactively.",
+      "executable": true
+    },
+    "history": {
+      "category": "Transaction History",
+      "command": "rsk-cli history",
+      "questions": [
+        "Can I view my transaction history?",
+        "How do I fetch wallet transaction history?",
+        "Can I see my past transactions?",
+        "How to get transaction history on testnet?",
+        "What command shows wallet history?",
+        "How do I view transaction records?",
+        "Can I check historical transactions?"
+      ],
+      "answer": "Use `rsk-cli history` to fetch wallet transaction history (requires Alchemy API key).\n\n**Mainnet**: `rsk-cli history --apiKey <api_key> --number <number>`\n**Testnet**: `rsk-cli history --testnet --apiKey <api_key> --number <number>`\n\n**If API key is already set**:\n- `rsk-cli history --number <number>`\n- `rsk-cli history --testnet --number <number>`\n\nShows ERC20, ERC721, and external transfers with details like from/to addresses, token info, values, and timestamps.",
+      "executable": true
+    },
+    "batch-transfer": {
+      "category": "Batch Operations",
+      "command": "rsk-cli batch-transfer",
+      "questions": [
+        "Can I send multiple transactions at once?",
+        "How do I transfer to multiple addresses?",
+        "What's batch transfer command?",
+        "Can I send bulk transactions?",
+        "How to transfer RBTC to many addresses?",
+        "Can I use files for batch transfers?"
+      ],
+      "answer": "Use `rsk-cli batch-transfer` to send multiple transactions in one batch.\n\n**Interactive Mode**:\n- Mainnet: `rsk-cli batch-transfer --interactive`\n- Testnet: `rsk-cli batch-transfer --testnet --interactive`\n\n**File-based Mode**:\n- Mainnet: `rsk-cli batch-transfer --file <path/to/file.json>`\n- Testnet: `rsk-cli batch-transfer --testnet --file <path/to/file.json>`\n\n**JSON format**: `[{\"to\": \"0xAddress\", \"value\": 0.001}, ...]`",
+      "executable": true
+    }
+  },
+  "general": {
+    "category": "General Information",
+    "questions": [
+      "What is rsk-cli and what is it used for?",
+      "What is rsk-cli?",
+      "What does rsk-cli do?",
+      "What is Rootstock CLI?"
+    ],
+    "answer": "rsk-cli is a command-line tool for interacting with the Rootstock blockchain. It allows you to:\n\n• **Manage wallets** (create, import, switch)\n• **Check balances** for RBTC and ERC20 tokens\n• **Transfer tokens** between addresses\n• **Deploy and verify** smart contracts\n• **Interact with contracts** and bridge\n• **View transaction** status and history\n• **Batch operations** for multiple transfers\n\nInstall with: `npm i -g @rsksmart/rsk-cli`",
+    "executable": false
+  },
+  "networks": {
+    "category": "Network Information",
+    "questions": [
+      "What is the difference between mainnet and testnet in rsk-cli?",
+      "How do I use testnet vs mainnet?",
+      "What's the difference between networks?"
+    ],
+    "answer": "**Mainnet vs Testnet differences**:\n\n**Mainnet** (Production):\n- Real RBTC and tokens with actual value\n- Commands: Use without `--testnet` flag\n- Network: Rootstock Mainnet\n\n**Testnet** (Development):\n- Test tokens (tRIF, test RBTC) with no real value\n- Commands: Add `--testnet` or `-t` flag\n- Network: Rootstock Testnet\n- Safe for testing and development\n\n**Example**: \n- Mainnet: `rsk-cli balance`\n- Testnet: `rsk-cli balance --testnet`",
+    "executable": false
+  }
+}
